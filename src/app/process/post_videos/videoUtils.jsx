@@ -12,17 +12,18 @@ export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUplo
     setUploadStatus("");
     setProgress("🔄 Đang nạp video...");
 
-    const buffer = await file.arrayBuffer();
+    let buffer = await file.arrayBuffer();
     // ✅ Giải phóng file gốc sớm
     file = null;
     setProgress("🔄 Đang đọc video...");
     await ffmpeg.writeFile("input.mp4", new Uint8Array(buffer));
+    buffer = null; // 🧹 Dọn RAM
     setProgress("🔄 Đang nén video...");
 
     await ffmpeg.exec([
         "-i", "input.mp4",
         "-c:v", "libx264",
-        "-b:v", "800k",
+        "-b:v", "680k",
         "-preset", "ultrafast",
         "-vf", "scale=-2:720",
         "-r", "30",
@@ -44,7 +45,7 @@ export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUplo
         const formData = new FormData();
         formData.append("file", blob, "compressed.mp4");
 
-        const response = await fetch(`http://vip.tecom.pro:8789/videos_job?mode=post_videos`, {
+        const response = await fetch(`https://hust.media/link/load_mode/mode_videos/mode_videos_dynamic.php?mode=post_videos`, {
             method: "POST",
             body: formData,
         });

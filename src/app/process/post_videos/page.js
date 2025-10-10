@@ -1,11 +1,43 @@
-"use client"; // 🔥 Bắt buộc phải đứng trên cùng
-
+"use client";
 
 import { useEffect, useRef, useState, Suspense } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { toBlobURL } from "@ffmpeg/util";
 import { useSearchParams } from "next/navigation";
-import { transcode } from "./videoUtils.jsx"; // <-- import file mới
+import { transcode } from "./videoUtils.jsx";
+
+// 🔹 Hàm tải có cache 1 ngày
+const toBlobURLWithCache = async (url, type) => {
+    const cacheName = "ffmpeg-cache";
+    const cache = await caches.open(cacheName);
+
+    // Kiểm tra xem file đã cache chưa
+    const cachedResponse = await cache.match(url);
+    if (cachedResponse) {
+        // 🕒 Kiểm tra hạn cache (1 ngày)
+        const dateHeader = cachedResponse.headers.get("date");
+        if (dateHeader) {
+            const cachedTime = new Date(dateHeader).getTime();
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            if (now - cachedTime < oneDay) {
+                const blob = await cachedResponse.blob();
+                return URL.createObjectURL(blob);
+            }
+        }
+    }
+
+    // ⚡ Nếu chưa cache hoặc cache hết hạn, tải lại
+    const response = await fetch(url, { cache: "reload" });
+    const headers = new Headers(response.headers);
+    headers.set("date", new Date().toUTCString());
+
+    // Lưu vào cache
+    const responseToCache = new Response(await response.blob(), { headers });
+    await cache.put(url, responseToCache.clone());
+
+    const blob = await responseToCache.blob();
+    return URL.createObjectURL(blob);
+};
 
 function VideoProcessorInner() {
     const [loaded, setLoaded] = useState(false);
@@ -13,7 +45,6 @@ function VideoProcessorInner() {
     const [output, setOutput] = useState(null);
     const [progress, setProgress] = useState("");
     const [uploadStatus, setUploadStatus] = useState("");
-    const [id_videos_info, set_id_videos_info] = useState("");
     const [progress_video, set_progress_video] = useState(false);
 
     const searchParams = useSearchParams();
@@ -22,29 +53,49 @@ function VideoProcessorInner() {
 
     const load = async () => {
         if (loaded || isLoading) return;
-        setIsLoading(true);
 
         const ffmpeg = ffmpegRef.current;
-        const baseURL = "https://hust.media/javascript/ffmpeg";
+        // 🧹 Dọn sạch thủ công nếu đã từng load trước đó
+        try {
+            // Xoá tất cả file tạm trong FS (RAM)
+            for (const file of await ffmpeg.listDir("/")) {
+                if (file.name !== "." && file.name !== "..") {
+                    await ffmpeg.deleteFile(file.name);
+                }
+            }
 
+            // Dừng worker để giải phóng RAM (nếu có)
+            if (ffmpeg.worker) {
+                ffmpeg.worker.terminate();
+                ffmpeg.worker = null;
+            }
+        } catch (err) {
+            console.warn("⚠️ Không thể dọn FFmpeg:", err);
+        }
         ffmpeg.on("log", ({ message }) => setProgress(message));
 
-        await ffmpeg.load({
-            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
-            workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, "text/javascript"),
-        });
+        const baseURL = "https://hust.media/javascript/ffmpeg";
 
-        setLoaded(true);
-        setIsLoading(false);
+        setIsLoading(true);
+
+        try {
+            await ffmpeg.load({
+                coreURL: await toBlobURLWithCache(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+                wasmURL: await toBlobURLWithCache(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+                workerURL: await toBlobURLWithCache(`${baseURL}/ffmpeg-core.worker.js`, "text/javascript"),
+            });
+        } catch (err) {
+            console.error("Lỗi khi tải FFmpeg:", err);
+        } finally {
+            setLoaded(true);
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
-        const id = searchParams.get("id_videos_info");
-        if (id) set_id_videos_info(id);
         const timer = setTimeout(() => load(), 500);
         return () => clearTimeout(timer);
-    }, [searchParams]);
+    }, []);
 
     return (
         <div className="px-8 mt-5 flex flex-col items-center gap-4">
@@ -57,7 +108,7 @@ function VideoProcessorInner() {
 
             {!loaded ? (
                 <div className="text-gray-600">
-                    {isLoading ? "⏳ Đang tải ffmpeg-core-mt..." : "⏳ Chuẩn bị tải ffmpeg-core-mt..."}
+                    {isLoading ? "⏳ Đang tải ffmpeg-core..." : "⏳ Chuẩn bị tải ffmpeg-core..."}
                 </div>
             ) : (
                 <>
@@ -70,7 +121,8 @@ function VideoProcessorInner() {
                         accept="video/*"
                         onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (file) transcode(file, ffmpegRef, setProgress, setOutput, setUploadStatus, set_progress_video);
+                            if (file)
+                                transcode(file, ffmpegRef, setProgress, setOutput, setUploadStatus, set_progress_video);
                         }}
                         className="border p-2"
                     />
@@ -86,7 +138,9 @@ function VideoProcessorInner() {
                     )}
 
                     {progress && (
-                        <pre className="text-xs text-gray-500 mt-2 whitespace-pre-wrap max-h-48 overflow-y-auto">{progress}</pre>
+                        <pre className="text-xs text-gray-500 mt-2 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                            {progress}
+                        </pre>
                     )}
                 </>
             )}
