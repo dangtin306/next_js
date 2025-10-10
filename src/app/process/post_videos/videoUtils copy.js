@@ -1,4 +1,3 @@
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import Cookies from "js-cookie";
 
 export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUploadStatus, set_progress_video) => {
@@ -11,9 +10,11 @@ export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUplo
     set_progress_video(false);
     const ffmpeg = ffmpegRef.current;
     setUploadStatus("");
-    setProgress("🔄 Đang nén video...");
+    setProgress("🔄 Đang nạp video...");
 
-    await ffmpeg.writeFile("input.mp4", await fetchFile(file));
+    const buffer = await file.arrayBuffer();
+    await ffmpeg.writeFile("input.mp4", new Uint8Array(buffer));
+    setProgress("🔄 Đang nén video...");
 
     await ffmpeg.exec([
         "-i", "input.mp4",

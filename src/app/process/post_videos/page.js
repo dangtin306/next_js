@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { toBlobURL } from "@ffmpeg/util";
 import { useSearchParams } from "next/navigation";
-import { transcode } from "./videoUtils"; // <-- import file mới
+import { transcode } from "./videoUtils.jsx"; // <-- import file mới
 
 function VideoProcessorInner() {
     const [loaded, setLoaded] = useState(false);
@@ -25,7 +25,7 @@ function VideoProcessorInner() {
         setIsLoading(true);
 
         const ffmpeg = ffmpegRef.current;
-        const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/umd";
+        const baseURL = "https://hust.media/javascript/ffmpeg";
 
         ffmpeg.on("log", ({ message }) => setProgress(message));
 
