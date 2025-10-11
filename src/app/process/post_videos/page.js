@@ -39,6 +39,7 @@ const toBlobURLWithCache = async (url, type) => {
     return URL.createObjectURL(blob);
 };
 
+
 function VideoProcessorInner() {
     const [loaded, setLoaded] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +51,27 @@ function VideoProcessorInner() {
     const searchParams = useSearchParams();
     const ffmpegRef = useRef(new FFmpeg());
     const videoRef = useRef(null);
+
+
+
+    const handleBack = () => {
+        const params = new URLSearchParams(searchParams.toString());
+        // 🔹 Lấy giá trị hiện tại của ?app=
+        const app = params.get("app");
+
+        if (app == "uiviewcontroller") {
+            // Nếu trong app HustMedia Android → thoát tab
+            window.close();
+
+            // 👇 fallback: nếu app chặn window.close(), thử gửi lệnh back
+            setTimeout(() => {
+                window.history.back();
+            }, 300);
+        } else {
+            // Bình thường: quay lại trang trước
+            window.history.back();
+        }
+    };
 
     const load = async () => {
         if (loaded || isLoading) return;
@@ -100,7 +122,7 @@ function VideoProcessorInner() {
     return (
         <div className="px-8 mt-5 flex flex-col items-center gap-4">
             <button
-                onClick={() => window.history.back()}
+                onClick={() => handleBack()}
                 className="mt-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
             >
                 ⬅️ Quay lại
