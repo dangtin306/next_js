@@ -22,14 +22,7 @@ const Mqtt = forwardRef((props, ref) => {
         }
 
         console.log("🧩 Khởi tạo MQTT WebSocket...");
-        const client = mqtt.connect("ws://vip.tecom.pro:8793", {
-            will: {
-                topic: "server_log",
-                payload: `Client ${code_item} đã ngắt kết nối`,
-                qos: 0,
-                retain: false,
-            },
-        });
+        const client = mqtt.connect("ws://vip.tecom.pro:8793");
         clientRef.current = client;
 
         client.on("connect", () => {
