@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 
-export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUploadStatus, set_progress_video) => {
+export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUploadStatus, set_progress_video, publishMessage) => {
     const maxSize = 500 * 1024 * 1024; // 500MB
     if (file.size > maxSize) {
         alert("❌ File quá lớn! Chỉ chấp nhận tối đa 500MB.");
@@ -52,6 +52,7 @@ export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUplo
 
         if (response.ok) {
             Cookies.set('upload_videos_check', true, { expires: 300 });
+            publishMessage?.();
             setUploadStatus("✅ Gửi thành công! Ấn quay lại để tiếp tục.");
         } else {
             setUploadStatus(`❌ Gửi thất bại: ${response.statusText}`);

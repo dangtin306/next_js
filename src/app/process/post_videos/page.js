@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { useSearchParams } from "next/navigation";
 import { transcode } from "./videoUtils.jsx";
+import Mqtt from "./mqtt.jsx";
 
 // 🔹 Hàm tải có cache 1 ngày
 const toBlobURLWithCache = async (url, type) => {
@@ -118,9 +119,19 @@ function VideoProcessorInner() {
         const timer = setTimeout(() => load(), 500);
         return () => clearTimeout(timer);
     }, []);
+    const childRef = useRef(); // 🔹 ref tới component con
 
     return (
         <div className="px-8 mt-5 flex flex-col items-center gap-4">
+            {/* 👇 Nút trong file con */}
+            <Mqtt ref={childRef} />
+
+            {/* <button
+                onClick={() => childRef.current?.sayHello()}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+            >
+                Gọi hàm trong file con
+            </button> */}
             <button
                 onClick={() => handleBack()}
                 className="mt-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
@@ -144,10 +155,19 @@ function VideoProcessorInner() {
                         onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file)
-                                transcode(file, ffmpegRef, setProgress, setOutput, setUploadStatus, set_progress_video);
+                                transcode(
+                                    file,
+                                    ffmpegRef,
+                                    setProgress,
+                                    setOutput,
+                                    setUploadStatus,
+                                    set_progress_video,
+                                    childRef.current?.publishMessage // ✅ truyền hàm, không gọi
+                                );
                         }}
                         className="border p-2"
                     />
+
 
                     {output && !isLoading && progress_video && (
                         <div className="mt-4 text-center">
