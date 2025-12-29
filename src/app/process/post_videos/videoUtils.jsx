@@ -20,6 +20,7 @@ export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUplo
     buffer = null; // 🧹 Dọn RAM
     setProgress("🔄 Đang nén video...");
 
+    
     await ffmpeg.exec([
         "-i", "input.mp4",
         "-c:v", "libx264",
@@ -30,7 +31,7 @@ export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUplo
         "-threads", "0",
         "-c:a", "copy",
         "output.mp4"
-    ]);
+    ]); 
 
     setProgress("✅ Nén xong, đang đọc dữ liệu...");
 
