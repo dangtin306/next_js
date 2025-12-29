@@ -22,7 +22,7 @@ const Mqtt = forwardRef((props, ref) => {
         }
 
         console.log("🧩 Khởi tạo MQTT WebSocket...");
-        const client = mqtt.connect("ws://vip.tecom.pro:8793");
+        const client = mqtt.connect("wss://ws.hust.media");
         clientRef.current = client;
 
         client.on("connect", () => {

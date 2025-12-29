@@ -14,12 +14,12 @@ const toBlobURLWithCache = async (url, type) => {
     // Kiểm tra xem file đã cache chưa
     const cachedResponse = await cache.match(url);
     if (cachedResponse) {
-        // 🕒 Kiểm tra hạn cache (1 ngày)
+        // 🕒 Kiểm tra hạn cache (5 ngày)
         const dateHeader = cachedResponse.headers.get("date");
         if (dateHeader) {
             const cachedTime = new Date(dateHeader).getTime();
             const now = Date.now();
-            const oneDay = 24 * 60 * 60 * 1000;
+            const oneDay = 5 * 24 * 60 * 60 * 1000;
             if (now - cachedTime < oneDay) {
                 const blob = await cachedResponse.blob();
                 return URL.createObjectURL(blob);

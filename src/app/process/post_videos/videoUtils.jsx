@@ -1,9 +1,9 @@
 import Cookies from "js-cookie";
 
 export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUploadStatus, set_progress_video, publishMessage) => {
-    const maxSize = 500 * 1024 * 1024; // 500MB
+    const maxSize = 600 * 1024 * 1024; // 500MB
     if (file.size > maxSize) {
-        alert("❌ File quá lớn! Chỉ chấp nhận tối đa 500MB.");
+        alert("❌ File quá lớn! Chỉ chấp nhận tối đa 600MB.");
         return;
     }
 
@@ -45,7 +45,7 @@ export const transcode = async (file, ffmpegRef, setProgress, setOutput, setUplo
         const formData = new FormData();
         formData.append("file", blob, "compressed.mp4");
 
-        const response = await fetch(`https://hust.media/link/load_mode/mode_videos/mode_videos_dynamic.php?mode=post_videos`, {
+        const response = await fetch(`https://hust.media/link/load_mode/mode_p2p_mmo/mode_videos/mode_videos_dynamic.php?mode=post_videos`, {
             method: "POST",
             body: formData,
         });
