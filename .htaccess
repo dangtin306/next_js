@@ -1,0 +1,25 @@
+Options +FollowSymLinks -MultiViews
+RewriteEngine On
+RewriteBase /next_js/
+
+# 0️⃣ Bật cross-origin isolation để dùng SharedArrayBuffer
+<IfModule mod_headers.c>
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Cross-Origin-Embedder-Policy "require-corp"
+</IfModule>
+
+# 1) Bỏ qua các tài nguyên Next.js
+RewriteRule ^_next/ - [L]
+RewriteRule ^static/ - [L]
+
+# 2) Nếu request trỏ tới file hoặc thư mục thật thì phục vụ trực tiếp
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# 3) Nếu URI chưa có .html và có file .html tương ứng thì phục vụ file đó
+RewriteCond %{REQUEST_URI} !\.html$
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+?)/?$ $1.html [L]
+
+# (Không có fallback / không map root → index.html ở đây)
